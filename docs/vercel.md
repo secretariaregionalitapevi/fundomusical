@@ -2,6 +2,10 @@
 
 Este deploy publica a página atual com o QR Bradesco fornecido pelo usuário e o botão Copia e Cola. A escolha de banco e a abertura do aplicativo continuam pendentes da integração descrita em [bank-handoff.md](bank-handoff.md). O Wi-Fi precisa ser configurado separadamente depois que a URL estiver disponível.
 
+Repositório: [secretariaregionalitapevi/fundomusical](https://github.com/secretariaregionalitapevi/fundomusical), branch de produção `main`. Projeto vinculado: [secretaria-regional/fundomusical](https://vercel.com/secretaria-regional/fundomusical). Os pushes para `main` acionam o deploy de produção pela integração GitHub da Vercel.
+
+Domínio de produção atribuído pela Vercel: [fundomusical.vercel.app](https://fundomusical.vercel.app).
+
 ## Configuração do projeto
 
 - Framework: Next.js.

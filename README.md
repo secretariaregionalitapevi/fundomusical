@@ -40,7 +40,7 @@ pnpm build
 pnpm start
 ```
 
-PowerShell: `Copy-Item .env.example .env.local`. Para servidor, configurar HTTPS e domínio aprovado. Nenhum deploy externo ou alteração do roteador foi realizado. Docker e Vercel continuam disponíveis, mas a aplicação não exige Supabase para essa página.
+PowerShell: `Copy-Item .env.example .env.local`. A página não exige Supabase. O repositório [fundomusical](https://github.com/secretariaregionalitapevi/fundomusical) está vinculado ao projeto [fundomusical na Vercel](https://vercel.com/secretaria-regional/fundomusical); pushes para `main` acionam a publicação. Veja [as configurações do deploy](docs/vercel.md). A configuração do roteador continua separada.
 
 ## Verificar
 

@@ -5,6 +5,9 @@ import jsQR from 'jsqr';
 import { PNG } from 'pngjs';
 test.use({ serviceWorkers: 'block' });
 async function demo(page: import('@playwright/test').Page, lifetime = 60000) {
+  await page.route('**/api/health', (route) =>
+    route.fulfill({ json: { status: 'ok', service: 'fundo-musical' } }),
+  );
   await page.route('**/api/offering', (route) =>
     route.fulfill({
       json: {
