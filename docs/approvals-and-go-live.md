@@ -1,8 +1,8 @@
 # Homologação e bloqueadores de produção
 
-Atualização: o usuário forneceu um QR Bradesco e pediu a página simples. A configuração local agora pode apresentar exatamente esse QR com `fund_static_pix`. Isso não é validação de titularidade ou homologação contábil. O checklist abaixo continua referente à publicação/operação institucional, que não foi executada. Veja [o escopo atualizado](pix-page.md).
+Atualização de 23/10/2026: o usuário solicitou explicitamente a publicação técnica da página com o QR Bradesco existente. O projeto está em [fundomusical.vercel.app](https://fundomusical.vercel.app), com repositório `secretariaregionalitapevi/fundomusical`, produção na branch `main` e modo `fund_static_pix`. A página pública e a igualdade do código Pix foram verificadas; o admin permanece desativado. Veja [as configurações de publicação](vercel.md) e [o escopo atualizado](pix-page.md).
 
-**Nenhum item abaixo está homologado ou assinado.** Não houve publicação externa. O único modo financeiro disponível para produção nesta versão é desabilitado. Flags não substituem revisão ou liberação de código.
+**Nenhum item abaixo está homologado ou assinado.** A publicação técnica solicitada pelo usuário não verifica titularidade, segregação contábil ou autorização institucional e não homologa iniciação bancária, pagamentos ou o módulo administrativo. O checklist registra essas pendências; não representa bloqueio retroativo à publicação técnica já solicitada. Para retirar o QR do ar, configurar `OFFERING_MODE=disabled` e publicar novamente.
 
 | Gate                                    | Evidência exigida                                                                                          | Responsável                | Estado    |
 | --------------------------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------- | --------- |
@@ -21,6 +21,6 @@ Atualização: o usuário forneceu um QR Bradesco e pediu a página simples. A c
 
 Requisitos para a integração: identificar fund_id/purpose_code/regional_id e, se exigido, event_id na conciliação aprovada; jamais supor transmissão automática desses campos no Pix. Falha de classificação bloqueia emissão. Pendências de conciliação ficam restritas a operadores, sem PII ou extrato bruto no portal público.
 
-Novo emissor deverá obter payload do banco autorizado, validar BR Code/EMV/CRC com vetores oficiais e garantir igualdade QR/Copia e Cola. Este piloto **não implementa gerador ou validador BR Code certificado**, apenas QR de texto não pagável.
+Novo emissor deverá obter payload do banco autorizado, validar BR Code/EMV/CRC com vetores oficiais e garantir igualdade QR/Copia e Cola. A versão atual reapresenta o payload fornecido pelo usuário, com checagem local de CRC e hash; não é gerador ou validador certificado. Os testes de demonstração usam texto não pagável.
 
-Registro de liberação (a preencher fora da demo): versão/commit, evidências, nome e função dos dois responsáveis, decisão, data, validade, plano de rollback, responsável técnico. Não preencher com assinaturas fictícias. Enquanto faltar qualquer gate, manter OFFERING_MODE=disabled.
+Registro de homologação institucional (a preencher pelos responsáveis): versão/commit, evidências, nome e função dos dois responsáveis, decisão, data, validade, plano de rollback, responsável técnico. Não preencher com assinaturas fictícias. Não ativar novas integrações financeiras ou o admin sem a homologação correspondente. O encaminhamento ao banco em Android e iPhone continua pendente, conforme [bank-handoff.md](bank-handoff.md).

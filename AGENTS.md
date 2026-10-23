@@ -6,7 +6,7 @@
 - Não inventar autorização, favorecido, CNPJ, domínio, ensaio, contato, marca ou métricas reais.
 - Nenhum dado bancário, API ou sessão pode entrar no cache do SW, localStorage ou IndexedDB.
 - Nenhum dado pessoal do visitante, comprovante, identificação persistente ou confirmação de pagamento.
-- Não ativar produção/publicação sem o checklist assinado de docs/approvals-and-go-live.md.
+- O usuário autorizou explicitamente a publicação técnica da página com o QR existente em 23/10/2026, no GitHub secretariaregionalitapevi/fundomusical e na Vercel secretaria-regional/fundomusical. Isso não constitui assinatura do checklist institucional. Novas integrações bancárias e ativação do admin continuam sujeitas à homologação de docs/approvals-and-go-live.md.
 - Admin exige getUser no servidor, perfil ativo, AAL2 e RLS. Nunca usar secret key no navegador.
 - Aprovação de conta exige dois operadores distintos e auditoria transacional. Não permitir UPDATE direto.
 - Usar Node 24 LTS e pnpm com lockfile. Executar lint, typecheck, test, build e e2e após mudanças relevantes.
