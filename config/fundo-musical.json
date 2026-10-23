@@ -1,0 +1,12 @@
+{
+  "enabled": true,
+  "fundId": "fundo-musical-itapevi",
+  "purposeCode": "FUNDO_MUSICAL",
+  "beneficiaryName": "CONGREGAÇÃO CRISTÃ NO BRASIL",
+  "beneficiaryDocument": null,
+  "bankName": "Bradesco",
+  "pixKey": "cf3816d2-812f-4274-a0d9-f7774010fc54",
+  "payload": "00020126580014BR.GOV.BCB.PIX0136cf3816d2-812f-4274-a0d9-f7774010fc545204000053039865802BR5925CONGREGACAO CRISTA NO BRA6007ITAPEVI62070503***63043A71",
+  "payloadSha256": "f079e49215bc00542f0d3a311ff1270841055efe10a2213fcd4979fc9589b24e",
+  "source": "QR Bradesco enviado pelo usuário nesta conversa, 23/10/2026. Destinação Fundo Musical informada pelo usuário; titularidade e segregação não verificadas pelo portal."
+}

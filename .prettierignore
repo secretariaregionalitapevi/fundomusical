@@ -1,0 +1,8 @@
+.next
+node_modules
+.tools
+.cache
+pnpm-lock.yaml
+PROMPT_CODEX_FUNDO_MUSICAL_CCB.md
+test-results
+playwright-report

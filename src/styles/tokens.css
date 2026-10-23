@@ -1,0 +1,15 @@
+/* Azul e branco aplicados conforme referência fornecida pelo usuário. */
+:root {
+  --color-paper: #f1f5f9;
+  --color-white: #fff;
+  --color-ink: #193e64;
+  --color-text: #31465d;
+  --color-muted: #61738a;
+  --color-accent: #204d7a;
+  --color-line: #e2e9f1;
+  --color-soft: #f3f7fb;
+  --color-sand: #fff7e5;
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-display: Arial, Helvetica, sans-serif;
+  --radius-card: 20px;
+}
