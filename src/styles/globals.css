@@ -117,11 +117,11 @@ button:disabled {
   gap: 9px;
   margin-top: 13px;
 }
-.pix-diamond {
-  color: #237e7a;
-  font-size: 24px;
-  line-height: 20px;
-  font-weight: 700;
+.pix-logo {
+  display: block;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
 }
 .qr-frame {
   width: 226px;
@@ -190,6 +190,17 @@ button:disabled {
   color: #50677f;
   margin-top: 3px;
 }
+.recipient-bank {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.bank-logo {
+  display: block;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
 .button {
   border: 1px solid transparent;
   display: inline-flex;
@@ -227,6 +238,19 @@ button:disabled {
   background: #e7edf3;
   color: #5c7088;
   box-shadow: none;
+}
+.button.primary.copy-pix,
+.button.primary.copy-pix:hover,
+.button.primary.copy-pix:disabled {
+  color: #fff;
+  background: linear-gradient(105deg, #245280, #173c63);
+  box-shadow: 0 3px 7px #1c436621;
+  opacity: 1;
+}
+.button.primary.copy-pix.copied,
+.button.primary.copy-pix.copied:hover {
+  background: #00bdae;
+  color: #fff;
 }
 .pix-feedback {
   min-height: 33px;

@@ -3,6 +3,7 @@ import type { NextConfig } from 'next';
 const config: NextConfig = {
   output: process.env.VERCEL === '1' ? undefined : 'standalone',
   outputFileTracingIncludes: {
+    '/': ['./config/fundo-musical.json'],
     '/api/offering': ['./config/fundo-musical.json'],
   },
   poweredByHeader: false,

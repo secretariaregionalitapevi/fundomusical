@@ -34,7 +34,7 @@ export class BankQrOfferingProvider implements OfferingProvider {
     return {
       kind: 'ready',
       payload: config.payload,
-      expiresAt: new Date(Date.now() + 5 * 60_000).toISOString(),
+      expiresAt: null,
       purposeCode: 'FUNDO_MUSICAL',
       beneficiaryName: config.beneficiaryName,
       beneficiaryDocument: config.beneficiaryDocument,

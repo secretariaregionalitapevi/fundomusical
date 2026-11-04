@@ -5,7 +5,7 @@ it('worker antigo remove cache obsoleto; API, admin e RSC são exclusivamente re
   const listeners: Record<string, (event: unknown) => void> = {};
   const fetch = (await import('vitest')).vi.fn().mockResolvedValue(new Response('ok'));
   const caches = {
-    keys: async () => ['fundo-musical-shell-v0', 'fundo-musical-shell-v2', 'outro-app'],
+    keys: async () => ['fundo-musical-shell-v0', 'fundo-musical-shell-v3', 'outro-app'],
     delete: (await import('vitest')).vi.fn().mockResolvedValue(true),
   };
   vm.runInNewContext(readFileSync('public/sw.js', 'utf8'), {

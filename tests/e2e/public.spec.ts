@@ -4,6 +4,104 @@ import { DEMO_PAYLOAD } from '../../src/domain/offering/model';
 import jsQR from 'jsqr';
 import { PNG } from 'pngjs';
 test.use({ serviceWorkers: 'block' });
+test('QR fixo já carregado permanece visível e copiável offline, sem expiração artificial', async ({
+  page,
+  context,
+}) => {
+  await page.route('**/api/health', (route) => route.fulfill({ json: { status: 'ok' } }));
+  await page.route('**/api/offering', (route) =>
+    route.fulfill({
+      json: {
+        kind: 'ready',
+        payload: DEMO_PAYLOAD,
+        expiresAt: null,
+        purposeCode: 'FUNDO_MUSICAL',
+        beneficiaryName: 'FAVORECIDO DE TESTE',
+        beneficiaryDocument: null,
+        bankName: 'Banco simulado',
+      },
+    }),
+  );
+  await page.addInitScript(() =>
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async (value: string) => {
+          (window as unknown as { copied: string }).copied = value;
+        },
+      },
+    }),
+  );
+  await page.goto('/');
+  await expect(page.locator('.qr-frame img')).toBeVisible();
+  await context.setOffline(true);
+  await page.evaluate(() => {
+    window.dispatchEvent(new Event('offline'));
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await expect(page.locator('.qr-frame img')).toBeVisible();
+  await expect(page.getByText('FAVORECIDO DE TESTE')).toBeVisible();
+  await page.getByRole('button', { name: 'Copiar código Pix' }).click();
+  expect(await page.evaluate(() => (window as unknown as { copied: string }).copied)).toBe(
+    DEMO_PAYLOAD,
+  );
+});
+
+test('mantém a área de copiar visível enquanto os dados carregam', async ({ page }) => {
+  await page.route('**/api/health', (route) =>
+    route.fulfill({ json: { status: 'ok', service: 'fundo-musical' } }),
+  );
+  let release!: () => void;
+  const pending = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route('**/api/offering', async (route) => {
+    await pending;
+    await route.fulfill({
+      json: {
+        kind: 'demo',
+        payload: DEMO_PAYLOAD,
+        purposeCode: 'FUNDO_MUSICAL',
+        expiresAt: new Date(Date.now() + 60000).toISOString(),
+      },
+    });
+  });
+  await page.goto('/');
+  try {
+    await expect(page.getByText('ou copie o código abaixo')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Copiar código Pix' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Copiar código Pix' })).toBeDisabled();
+  } finally {
+    release();
+  }
+  await expect(page.getByRole('button', { name: 'Copiar código de teste' })).toBeEnabled();
+});
+
+test('falha ao desenhar QR não impede copiar o código recebido', async ({ page }) => {
+  await demo(page);
+  await page.addInitScript(() => {
+    HTMLCanvasElement.prototype.toDataURL = () => {
+      throw new Error('Falha simulada no QR');
+    };
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async (value: string) => {
+          (window as unknown as { copied: string }).copied = value;
+        },
+      },
+    });
+  });
+  await page.goto('/');
+  await expect(
+    page.getByText('Não foi possível exibir o QR Code. Use o código Pix abaixo.'),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Copiar código de teste' }).click();
+  expect(await page.evaluate(() => (window as unknown as { copied: string }).copied)).toBe(
+    DEMO_PAYLOAD,
+  );
+});
+
 async function demo(page: import('@playwright/test').Page, lifetime = 60000) {
   await page.route('**/api/health', (route) =>
     route.fulfill({ json: { status: 'ok', service: 'fundo-musical' } }),
@@ -110,12 +208,16 @@ test('health indisponível e expiração não deixam copiar', async ({ page }) =
   await expect(
     page.getByRole('heading', { name: 'Não foi possível carregar o Pix' }),
   ).toBeVisible();
-  await expect(page.locator('.copy-pix,.qr-frame img')).toHaveCount(0);
+  await expect(page.locator('.qr-frame img')).toHaveCount(0);
+  await expect(page.locator('.copy-pix')).toBeVisible();
+  await expect(page.locator('.copy-pix')).toBeDisabled();
   await page.unroute('**/api/health');
   await demo(page, 1000);
   await page.getByRole('button', { name: 'Tentar novamente' }).click();
   await expect(page.getByRole('heading', { name: 'Atualize o QR Code' })).toBeVisible();
-  await expect(page.locator('.copy-pix,.qr-frame img')).toHaveCount(0);
+  await expect(page.locator('.qr-frame img')).toHaveCount(0);
+  await expect(page.locator('.copy-pix')).toBeVisible();
+  await expect(page.locator('.copy-pix')).toBeDisabled();
 });
 test('admin bloqueado e dados financeiros sem cache ou paid por visitante', async ({ request }) => {
   for (const path of ['/admin', '/admin/login']) {

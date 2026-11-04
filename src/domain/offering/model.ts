@@ -20,7 +20,8 @@ export const offeringResultSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('ready'),
     payload: z.string().min(40).max(512),
-    expiresAt: z.iso.datetime(),
+    // null identifica o QR fixo fornecido pelo usuário, sem validade artificial da tela.
+    expiresAt: z.iso.datetime().nullable(),
     purposeCode: z.literal('FUNDO_MUSICAL'),
     beneficiaryName: z.string().min(3).max(140),
     beneficiaryDocument: z.string().nullable(),

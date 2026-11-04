@@ -19,14 +19,32 @@ import { offeringResultSchema, type OfferingResult } from '@/domain/offering/mod
 type State =
   'loading' | 'ready' | 'copied' | 'copy-error' | 'offline' | 'expired' | 'unavailable' | 'error';
 type AvailableOffering = Extract<OfferingResult, { kind: 'ready' | 'demo' }>;
-export function ContributionPanel() {
-  const [state, setState] = useState<State>('loading');
-  const [offering, setOffering] = useState<AvailableOffering | null>(null);
-  const [qr, setQr] = useState('');
+export function ContributionPanel({
+  initialOffering,
+  initialQr = '',
+}: {
+  initialOffering?: OfferingResult;
+  initialQr?: string;
+}) {
+  const initialAvailable =
+    initialOffering && initialOffering.kind !== 'unavailable' ? initialOffering : null;
+  const fixed = initialAvailable?.kind === 'ready' && initialAvailable.expiresAt === null;
+  const [state, setState] = useState<State>(
+    initialAvailable
+      ? 'ready'
+      : initialOffering?.kind === 'unavailable'
+        ? initialOffering.reason === 'error'
+          ? 'error'
+          : 'unavailable'
+        : 'loading',
+  );
+  const [offering, setOffering] = useState<AvailableOffering | null>(initialAvailable);
+  const [qr, setQr] = useState(initialQr);
+  const [qrFailed, setQrFailed] = useState(!!initialAvailable && !initialQr);
   const [showCode, setShowCode] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
   const generation = useRef(0);
-  const current = useRef<AvailableOffering | null>(null);
+  const current = useRef<AvailableOffering | null>(initialAvailable);
   const expiry = useRef<ReturnType<typeof setTimeout> | null>(null);
   const codeField = useRef<HTMLTextAreaElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -39,6 +57,7 @@ export function ContributionPanel() {
     if (expiry.current) clearTimeout(expiry.current);
     setOffering(null);
     setQr('');
+    setQrFailed(false);
     setShowCode(false);
     setState(next);
   }, []);
@@ -66,32 +85,44 @@ export function ContributionPanel() {
         setState(data.reason === 'expired' ? 'expired' : 'unavailable');
         return;
       }
-      const remaining = Date.parse(data.expiresAt) - Date.now();
+      const remaining =
+        data.expiresAt === null ? Infinity : Date.parse(data.expiresAt) - Date.now();
       if (remaining <= 0) {
         invalidate('expired');
         return;
       }
-      const image = await QRCode.toDataURL(data.payload, {
-        width: 320,
-        margin: 4,
-        errorCorrectionLevel: 'M',
-        color: { dark: '#10243aff', light: '#ffffffff' },
-      });
-      if (generation.current !== version) return;
       current.current = data;
       setOffering(data);
-      setQr(image);
       setState('ready');
-      expiry.current = setTimeout(() => invalidate('expired'), remaining);
+      if (Number.isFinite(remaining))
+        expiry.current = setTimeout(() => invalidate('expired'), remaining);
+      try {
+        const image = await QRCode.toDataURL(data.payload, {
+          width: 320,
+          margin: 4,
+          errorCorrectionLevel: 'M',
+          color: { dark: '#10243aff', light: '#ffffffff' },
+        });
+        if (generation.current === version) setQr(image);
+      } catch {
+        if (generation.current === version) setQrFailed(true);
+      }
     } catch {
       if (generation.current === version) invalidate(navigator.onLine ? 'error' : 'offline');
     }
   }, [invalidate]);
   useEffect(() => {
+    // O QR fixo já veio na resposta HTML: permanece em memória, sem cache persistente.
+    if (fixed || initialOffering) return;
     const start = setTimeout(() => void refresh(), 0);
-    const online = () => void refresh();
-    const offline = () => invalidate('offline');
+    const online = () => {
+      if (current.current?.expiresAt !== null) void refresh();
+    };
+    const offline = () => {
+      if (current.current?.expiresAt !== null) invalidate('offline');
+    };
     const visibility = () => {
+      if (current.current?.expiresAt === null) return;
       if (document.visibilityState === 'hidden') invalidate('loading');
       else void refresh();
     };
@@ -110,14 +141,14 @@ export function ContributionPanel() {
       window.removeEventListener('pageshow', online);
       document.removeEventListener('visibilitychange', visibility);
     };
-  }, [refresh, invalidate]);
+  }, [refresh, invalidate, fixed, initialOffering]);
   async function copy() {
     const data = current.current;
-    if (!navigator.onLine) {
+    if (!navigator.onLine && data?.expiresAt !== null) {
       invalidate('offline');
       return;
     }
-    if (!data || Date.parse(data.expiresAt) <= Date.now()) {
+    if (!data || (data.expiresAt !== null && Date.parse(data.expiresAt) <= Date.now())) {
       invalidate('expired');
       return;
     }
@@ -136,7 +167,7 @@ export function ContributionPanel() {
     }
   }
   const demo = offering?.kind === 'demo';
-  const available = !!offering && !!qr;
+  const available = !!offering;
   const title =
     state === 'offline'
       ? 'Você está sem conexão'
@@ -167,9 +198,15 @@ export function ContributionPanel() {
             <br className="wide-break" /> de instrumentos musicais.
           </p>
           <div className="pix-amount">
-            <span className="pix-diamond" aria-hidden="true">
-              ◇
-            </span>{' '}
+            <picture>
+              <img
+                className="pix-logo"
+                src="/branding/pix-logo.png"
+                width="20"
+                height="20"
+                alt=""
+              />
+            </picture>
             Pix <span aria-hidden="true">·</span> Valor livre
           </div>
           {state === 'loading' ? (
@@ -179,99 +216,37 @@ export function ContributionPanel() {
             </div>
           ) : available ? (
             <>
-              <div className="qr-frame">
-                <picture>
-                  <img
-                    src={qr}
-                    width="320"
-                    height="320"
-                    alt={
-                      demo
-                        ? 'QR Code de demonstração, não pagável'
-                        : 'QR Code Pix do Fundo Musical — Regional Itapevi'
-                    }
-                  />
-                </picture>
-              </div>
+              {qr ? (
+                <div className="qr-frame">
+                  <picture>
+                    <img
+                      src={qr}
+                      width="320"
+                      height="320"
+                      onError={() => {
+                        setQr('');
+                        setQrFailed(true);
+                      }}
+                      alt={
+                        demo
+                          ? 'QR Code de demonstração, não pagável'
+                          : 'QR Code Pix do Fundo Musical — Regional Itapevi'
+                      }
+                    />
+                  </picture>
+                </div>
+              ) : (
+                <div className="qr-loading" role="status">
+                  {!qrFailed && <LoaderCircle size={26} className="spin" aria-hidden="true" />}
+                  <span>
+                    {qrFailed
+                      ? 'Não foi possível exibir o QR Code. Use o código Pix abaixo.'
+                      : 'Carregando QR Code…'}
+                  </span>
+                </div>
+              )}
               {demo && <p className="preview-label">Prévia de teste · este QR não é pagável</p>}
               <p className="qr-caption">Escaneie com o aplicativo do seu banco</p>
-              <div className="pix-divider">
-                <span>ou copie o código abaixo</span>
-              </div>
-              {offering.kind === 'ready' && (
-                <div className="recipient">
-                  <span>FAVORECIDO</span>
-                  <strong>{offering.beneficiaryName}</strong>
-                  <p>
-                    {offering.bankName}
-                    {offering.beneficiaryDocument ? ` · CNPJ ${offering.beneficiaryDocument}` : ''}
-                  </p>
-                </div>
-              )}
-              <button
-                className={`button primary full copy-pix ${state === 'copied' ? 'copied' : ''}`}
-                onClick={() => void copy()}
-              >
-                {state === 'copied' ? (
-                  <Check size={21} aria-hidden="true" />
-                ) : (
-                  <Copy size={20} aria-hidden="true" />
-                )}
-                {state === 'copied'
-                  ? 'Código copiado!'
-                  : demo
-                    ? 'Copiar código de teste'
-                    : 'Copiar código Pix'}
-              </button>
-              <div role="status" aria-live="polite" className="pix-feedback">
-                {state === 'copied'
-                  ? demo
-                    ? 'Texto de teste copiado. Não é um pagamento.'
-                    : 'Agora abra seu banco e escolha Pix Copia e Cola.'
-                  : state === 'copy-error'
-                    ? 'Selecione o código abaixo e copie manualmente.'
-                    : 'Depois, abra seu banco e use Pix Copia e Cola.'}
-              </div>
-              <button
-                className="text-button code-toggle"
-                onClick={() => setShowCode(!showCode)}
-                aria-expanded={showCode}
-                aria-controls="pix-code-section"
-              >
-                {showCode ? 'Ocultar código' : 'Ver código Pix'}{' '}
-                <ChevronDown size={15} aria-hidden="true" />
-              </button>
-              {showCode && (
-                <div id="pix-code-section" className="code-section">
-                  <label htmlFor="pix-code">
-                    {demo ? 'Código de teste, não pagável' : 'Pix Copia e Cola'}
-                  </label>
-                  <textarea
-                    ref={codeField}
-                    id="pix-code"
-                    readOnly
-                    value={offering.payload}
-                    rows={3}
-                    onFocus={(e) => e.currentTarget.select()}
-                  />
-                  <button
-                    className="text-button"
-                    onClick={() => {
-                      codeField.current?.focus();
-                      codeField.current?.select();
-                    }}
-                  >
-                    Selecionar código
-                  </button>
-                </div>
-              )}
-              <a
-                className="save-qr"
-                href={qr}
-                download={demo ? 'qr-demonstracao.png' : 'pix-fundo-musical-itapevi.png'}
-              >
-                <Download size={15} aria-hidden="true" /> Salvar QR Code
-              </a>
             </>
           ) : (
             <div className="pix-empty" role="status">
@@ -287,13 +262,111 @@ export function ContributionPanel() {
                   : state === 'expired'
                     ? 'Confira novamente os dados antes de contribuir.'
                     : state === 'error'
-                      ? 'Verifique sua conexão e tente novamente.'
+                      ? 'Os dados Pix não puderam ser carregados. Tente novamente.'
                       : 'O código do Fundo Musical precisa ser cadastrado para aparecer aqui.'}
               </p>
               <button className="button secondary" onClick={() => void refresh()}>
                 <RefreshCw size={17} aria-hidden="true" /> Tentar novamente
               </button>
             </div>
+          )}
+          <div className="pix-divider">
+            <span>ou copie o código abaixo</span>
+          </div>
+          {offering?.kind === 'ready' && (
+            <div className="recipient">
+              <span>FAVORECIDO</span>
+              <strong>{offering.beneficiaryName}</strong>
+              <p className="recipient-bank">
+                {offering.bankName.trim().toLowerCase() === 'bradesco' && (
+                  <picture>
+                    <img
+                      className="bank-logo"
+                      src="/branding/bradesco-logo.png"
+                      width="28"
+                      height="28"
+                      alt=""
+                    />
+                  </picture>
+                )}
+                <span>
+                  {offering.bankName}
+                  {offering.beneficiaryDocument ? ` · CNPJ ${offering.beneficiaryDocument}` : ''}
+                </span>
+              </p>
+            </div>
+          )}
+          <button
+            className={`button primary full copy-pix ${state === 'copied' ? 'copied' : ''}`}
+            onClick={() => void copy()}
+            disabled={!available}
+          >
+            {state === 'copied' ? (
+              <Check size={21} aria-hidden="true" />
+            ) : (
+              <Copy size={20} aria-hidden="true" />
+            )}
+            {state === 'copied'
+              ? 'Código copiado!'
+              : demo
+                ? 'Copiar código de teste'
+                : 'Copiar código Pix'}
+          </button>
+          <div role="status" aria-live="polite" className="pix-feedback">
+            {state === 'copied'
+              ? demo
+                ? 'Texto de teste copiado. Não é um pagamento.'
+                : 'Agora abra seu banco e escolha Pix Copia e Cola.'
+              : state === 'copy-error'
+                ? 'Selecione o código abaixo e copie manualmente.'
+                : available
+                  ? 'Depois, abra seu banco e use Pix Copia e Cola.'
+                  : state === 'loading'
+                    ? 'Carregando código Pix…'
+                    : 'O código Pix está indisponível. Tente novamente.'}
+          </div>
+          <button
+            className="text-button code-toggle"
+            onClick={() => setShowCode(!showCode)}
+            aria-expanded={showCode}
+            aria-controls="pix-code-section"
+            disabled={!available}
+          >
+            {showCode ? 'Ocultar código' : 'Ver código Pix'}{' '}
+            <ChevronDown size={15} aria-hidden="true" />
+          </button>
+          {showCode && offering && (
+            <div id="pix-code-section" className="code-section">
+              <label htmlFor="pix-code">
+                {demo ? 'Código de teste, não pagável' : 'Pix Copia e Cola'}
+              </label>
+              <textarea
+                ref={codeField}
+                id="pix-code"
+                readOnly
+                value={offering.payload}
+                rows={3}
+                onFocus={(e) => e.currentTarget.select()}
+              />
+              <button
+                className="text-button"
+                onClick={() => {
+                  codeField.current?.focus();
+                  codeField.current?.select();
+                }}
+              >
+                Selecionar código
+              </button>
+            </div>
+          )}
+          {qr && (
+            <a
+              className="save-qr"
+              href={qr}
+              download={demo ? 'qr-demonstracao.png' : 'pix-fundo-musical-itapevi.png'}
+            >
+              <Download size={15} aria-hidden="true" /> Salvar QR Code
+            </a>
           )}
           <div className="bank-tip">
             <LockKeyhole size={17} aria-hidden="true" />

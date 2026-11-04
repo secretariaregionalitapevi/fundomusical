@@ -1,5 +1,11 @@
 # Correção de escopo — 23/10/2026
 
+## QR fixo na resposta inicial — 04/11/2026
+
+No modo `fund_static_pix`, o servidor valida o arquivo do Fundo Musical e entrega o QR, favorecido e código na própria resposta HTML, sem depender de requisições posteriores a `/api/health` e `/api/offering` ou do JavaScript do visitante para exibir a imagem. O payload original permanece inalterado. O contrato usa `expiresAt: null` para esse código fixo, removendo a expiração artificial de cinco minutos da tela; isso não declara a validade bancária do código.
+
+Após abrir a página, esses dados permanecem somente na memória da aba e a cópia continua disponível ao perder a conexão ou alternar para o banco. Não há persistência em cache do service worker, localStorage ou IndexedDB. Abrir ou recarregar a página sem conexão continua exigindo acesso ao servidor: o fallback offline é neutro e não contém dados bancários. Demonstrações e contratos com validade definida continuam sujeitos à expiração e à remoção offline.
+
 O usuário rejeitou a primeira landing page e pediu uma única tela de contribuição para acesso pelo Wi-Fi. Essa orientação substitui as decisões anteriores de layout, paleta provisória verde e navegação pública.
 
 A tela agora tem logo CCB, azul/branco conforme imagem de referência, QR central sempre visível quando online, favorecido, banco, valor livre e botão grande de cópia. As instruções para abrir o banco aparecem após copiar ou tocar em “Como fazer o Pix”. Não há escolha de valor, cadastro, comprovante ou alegação de pagamento concluído.

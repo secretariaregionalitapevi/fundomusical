@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   applicationName: 'Fundo Musical',
   robots: { index: false, follow: false },
   appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Fundo Musical' },
-  icons: { icon: '/icons/icon.svg', apple: '/icons/apple-touch-icon.png' },
+  icons: { icon: '/icons/icon.svg?v=ccb', apple: '/icons/apple-touch-icon.png?v=ccb' },
 };
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#204d7a' };
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

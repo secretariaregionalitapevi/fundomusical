@@ -1,5 +1,5 @@
 /* Cache mínimo, auditável, sem qualquer dado financeiro ou sessão. */
-const CACHE = 'fundo-musical-shell-v2';
+const CACHE = 'fundo-musical-shell-v3';
 const STATIC = new Set([
   '/offline.html',
   '/icons/icon.svg',
